@@ -2,3 +2,7 @@
 # About the project
 
 *Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you can use R Markdown syntax.*
+
+# My expectations 
+On this course I hope to learn how to use R to produce statistical analysis for my PhD thesis. I hope R could be a tool to produce good figures as well. I have no previous experience in writing code, so I assume I need to work a lot on this course. I hearf of this course from my colleagues.#
+https://github.com/mjtarkia/IODS-project

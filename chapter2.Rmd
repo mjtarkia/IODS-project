@@ -32,6 +32,8 @@ To explore the relationship of variables to one another, the following codes wil
 pairs (learning2014)
 ```
 
+
+
 ```{r}
 p <- ggpairs(learning2014, mapping = aes(col=gender, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))
 p

@@ -2,7 +2,7 @@
 lrn14<-read.table("http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt", sep="\t", header=TRUE)
 
 library(dplyr)
-install.packages("dplyr")
+
 
 #make vectors of all questions in each dimension
 deep_questions <- c("D03", "D11", "D19", "D27", "D07", "D14", "D22", "D30","D06",  "D15", "D23", "D31")

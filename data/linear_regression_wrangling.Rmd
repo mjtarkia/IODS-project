@@ -31,3 +31,4 @@ write.table(learning2014, file = "learning2014") #to save the file
 test<-read.table("/Users/maarit/IODS-project/data/learning2014")
 str(test) #testing the structure of the file
 
+git config --global --edit

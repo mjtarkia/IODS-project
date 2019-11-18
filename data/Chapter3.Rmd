@@ -175,3 +175,5 @@ cv <- cv.glm(data = alc, cost = loss_func, glmfit = m3, K = 10)
 cv$delta[1]
 ```
 Here, the training error is similar to the model with more variables. However, the testing error seems to increase  when the number of variables decreases. With only two variables in model m7 (see above)
+
+

@@ -47,8 +47,12 @@ alc <- mutate(alc, high_use = alc_use > 2)
 #Take a look at the data
 glimpse(alc)
 str(alc)
+#check which working directory is currently in use
 getwd()
-write.table(create_alc, file = "create_alc")
+#set the certain as working directory
+setwd("/Users/maarit/IODS-project/data")
+#save the data file
+write.table(alc, file = "create_alc")
 test<-read.table("/Users/maarit/IODS-project/data/create_alc")
 str(test)
 

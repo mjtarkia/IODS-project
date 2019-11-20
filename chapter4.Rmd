@@ -1,0 +1,47 @@
+---
+title: "chapter4"
+author: "Maarit"
+date: "11/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Clustering analysis
+
+To start working, let's get an access to the Boston file in MASS library, and explore its structure and function:
+
+```{r}
+library(MASS)
+data("Boston")
+str(Boston)
+dim(Boston)
+```
+The data includes 506 observations of 14 variables regarding the housing values of suburbs in Boston. The variables include  nitrogen oxides consentration, crime rate per capita, ratio of teachers/student, household sizes etc.  
+
+Next, let's have a summary of the data
+```{r}
+summary(Boston)
+```
+
+```{r}
+pairs(Boston)
+```
+
+```{r}
+cor_matrix<-cor(Boston)
+print(cor_matrix)
+```
+
+```{r}
+library(corrplot)
+corrplot(cor_matrix, method="circle", type="upper", cl.pos="b", tl.pos="d", tl.cex=0.6)
+```
+
+```{r}
+Boston_scaled<-scale(Boston)
+summary(Boston_scaled)
+```
+

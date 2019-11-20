@@ -1,0 +1,175 @@
+
+---
+title: "Chapter3.Rmd"
+author: "Maarit Tarkiainen"
+date: "11/16/2019"
+output: html_document
+---
+# Logistic regression
+First let's rea the data file that we're working on:
+```{r}
+alc<-read.table("/Users/maarit/IODS-project/data/create_alc", sep=" ", header=TRUE)
+str(alc)
+```
+The data file shows students' conditions, such as their parents' education status, the time they spent on studying, travelling. Their social status, absencesetc. Alcohol consumption has been evaluated, and denominated to a high alcohol use group.
+
+To induce a plot which describes high alcohol use, first access some libraries in R
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+
+To examine the relation of different variables, such as age, school absence, final grades, or quality of family relationships with high alcohol consumption,  boxplot figures for each of the were produced. Sex was used as a grouping factor. The hypothesis was that young age, high school absence, low final grades and low quality of family relationships would correlate with high alcohol consumption.
+
+```{r}
+g1 <- ggplot(alc, aes(x = high_use, y = age, col=sex))
+g1 + geom_boxplot()
+```
+```{r}
+alc %>% group_by(sex, high_use) %>% summarise(count = n())
+```
+
+It seems that high alcohol use was more present in males. Males consuming more were older than low consuming males, whereas in females, the older consumed less alcohol
+
+```{r}
+g2 <- ggplot(alc, aes(x = high_use, y = absences))
+g2 + geom_boxplot()
+```
+It seems that students in high use group have more absence from school than students than other students.
+
+```{r}
+alc %>% group_by(high_use) %>% summarise(count = n(), School_absence=mean(absences))
+```
+
+```{r}
+g3 <- ggplot(alc, aes(x = high_use, y = G3))
+g3 + geom_boxplot() + ylab("grade")
+```
+```{r}
+alc %>% group_by(high_use) %>% summarise(count = n(), mean_grade = mean(G3))
+```
+
+Students in 
+
+```{r}
+g4 <- ggplot(alc, aes(x = high_use, y = famrel))
+g4 + geom_boxplot() + ylab("Quality of family relationships")
+```
+
+```{r}
+alc %>% group_by(high_use) %>% summarise(count = n(), Family_relationships = mean(famrel))
+```
+Forming a logistic model which includes all variables age, sex, absences, grades, family relationships, and print it 
+```{r}
+m <- glm(high_use ~ age + absences + famrel+G3, data = alc, family = "binomial")
+print(m)
+```
+To see the coefficients of factor type variables directly, without an intercept, I have fitter the model  by adding - 1 to the model formula. Following also coefficients of the model
+
+```{r}
+m1 <- glm(high_use ~ age + absences + sex-1 + famrel + G3, data = alc, family = "binomial")
+coef(m1)
+```
+
+
+To calculate odds ratios and their confidence intervals, and print them out
+```{r}
+OR <- coef(m1) %>% exp
+CI<-confint(m1)%>%exp
+cbind(OR, CI)
+```
+The 95% confidence intervals of family relationships and school absences don't include zero. Thus, only the primary hypotheses that higher amount of school absences and poorer family relationships predict higher alcohol consumption. 
+
+To predict high_use, let's first build a model with only the two significant factors absences and family relationships
+```{r}
+m7 <- glm(high_use ~ absences + famrel, data = alc, family = "binomial")
+print(m7)
+```
+Then we will predict the probability of high alcohol use, and add the predictive variable into the data. FInally, see the last ten classes and predicted probabilities, as well as class prediction:
+```{r}
+probabilities <- predict(m7, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+select(alc, absences,  high_use, famrel, probability, prediction) %>% tail(10)
+```
+Table regarding actual vs predicted values:
+
+```{r}
+table(high_use = alc$high_use, prediction = alc$prediction)
+```
+Let's draw a picture showing the actual and predicted values
+
+```{r}
+g <- ggplot(alc, aes(x = probability, y = high_use, col = prediction))
+g + geom_point()
+```
+Let us estimate the average number of wrong predictions (training error):
+```{r}
+loss_func <- function(class, prob) {
+ n_wrong <- abs(class - prob) > 0.5
+mean(n_wrong)
+}
+loss_func(class = alc$high_use, prob = alc$probability)
+```
+##Bonus:A ten-fold cross-validation of the model, using functions in boot-library:
+```{r}
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m7, K = 10)
+cv$delta[1]
+```
+The error is 0.29, which is larger than the 0.26 error in DataCamp exercises. Thus, this model is not as good as in the examples. The smaller number of variables in this model might contribute to the larger error.
+
+##Super-bonus: comparing the prediction error of a model with several variables  to a model with less variables. Let's choose the following variables to the first model: age, sex, no of past class failures, absences, famrel, studytime, final grades (G3).
+
+```{r}
+m2 <- glm(high_use ~ age + sex + failures + absences + famrel + studytime+ G3, data = alc, family = "binomial")
+coef(m2)
+```
+Testing the model against predicted
+```{r}
+probabilities <- predict(m2, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+loss_func <- function(class, prob) {
+ n_wrong <- abs(class - prob) > 0.5
+mean(n_wrong)
+}
+loss_func(class = alc$high_use, prob = alc$probability)
+
+```
+The training error of model m2 is 0.251.
+The following will show the testing error for m2:
+
+```{r}
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m2, K = 10)
+cv$delta[1]
+```
+Testing error is a little higher, 0.259
+
+Next let us create a model (m3)with less variables: age, sex, no of past class failures, absences, final grades (G3).
+
+```{r}
+m3 <- glm(high_use ~ age + sex + failures + absences + G3, data = alc, family = "binomial")
+coef(m3)
+```
+The training errors of model m3:
+```{r}
+probabilities <- predict(m3, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+loss_func <- function(class, prob) {
+ n_wrong <- abs(class - prob) > 0.5
+mean(n_wrong)
+}
+loss_func(class = alc$high_use, prob = alc$probability)
+
+```
+Testing error for m3:
+
+```{r}
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m3, K = 10)
+cv$delta[1]
+```
+Here, the training error is similar to the model with more variables. However, the testing error seems to increase  when the number of variables decreases. With only two variables in model m7 (see above)
+

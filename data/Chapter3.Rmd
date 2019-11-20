@@ -1,14 +1,11 @@
+
 ---
 title: "Chapter3.Rmd"
 author: "Maarit Tarkiainen"
 date: "11/16/2019"
 output: html_document
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
+```{r child = "chapter3.Rmd"}```
 First let's read the data file that we're working on:
 ```{r}
 alc<-read.table("/Users/maarit/IODS-project/data/create_alc", sep=" ", header=TRUE)

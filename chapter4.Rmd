@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Clustering analysis
-
+1## Item 2
 To start working, let's get an access to the Boston file in MASS library, and explore its structure and function:
 
 ```{r}
@@ -25,23 +25,179 @@ Next, let's have a summary of the data
 ```{r}
 summary(Boston)
 ```
-
+### Item 3
+Here we'll have a plot on the data Boston
 ```{r}
 pairs(Boston)
 ```
-
+Scaling this plot larger one could see that medv has a negatie correlation with lstat, a positive correlation with rm. Also a negative correlation for lstat and rm, as well as for dis and age.
 ```{r}
 cor_matrix<-cor(Boston)
 print(cor_matrix)
 ```
-
+Let us have a correlation matrix plot
 ```{r}
 library(corrplot)
 corrplot(cor_matrix, method="circle", type="upper", cl.pos="b", tl.pos="d", tl.cex=0.6)
 ```
+In this plot, blue means a positive correlation, as for rad and tax. Red means negative correlation, as for lstat/medv and dis with indux, nox or age.
 
+### Item 4
+Next we will standardize the Boston data.
 ```{r}
 Boston_scaled<-scale(Boston)
 summary(Boston_scaled)
+```
+
+To create crime as categorical variable, first let's make a vector "rob" to separate based on crime level
+
+```{r}
+
+Boston_scaled<-as.data.frame(Boston_scaled)
+class(Boston_scaled)
+rob<-quantile(Boston_scaled$crim)
+```
+
+To create the categorical vector "crime" with ("low", "med_low", "med_high", "high") as cut points, I'll use cut command:
+
+```{r}
+crime <- cut(Boston_scaled$crim, breaks = rob, include.lowest = TRUE, labels = c("low", "med_low", "med_high", "high"))
+table(crime)
+```
+Now let's remove original "crim" variable from the scaled dataset and add the new "crime" instead
+```{r}
+Boston_scaled <- dplyr::select(Boston_scaled, -crim)
+Boston_scaled <- data.frame(Boston_scaled, crime)
+```
+To form test and train sets, first get rownumbers for data set, and take a sample of 80 % of rows. Then create a train set, which includes the selected rownumbers, and a test set which does not include them.
+```{r}
+n <- nrow(Boston_scaled)
+ind <- sample(n, size = n * 0.8)
+train <- Boston_scaled[ind,]
+test <- Boston_scaled[-ind,]
+```
+### Item 5
+Let's explore a linear discriminant analysis on "crime"
+
+```{r}
+lda.fit <- lda(crime ~ ., data = train)
+lda.fit
+```
+A biplot of the LDA analysis
+```{r}
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "orange", tex = 0.75, choices = c(1,2)){
+heads <- coef(x)
+arrows(x0 = 0, y0 = 0, 
+x1 = myscale * heads[,choices[1]], 
+y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+text(myscale * heads[,choices], labels = row.names(heads), 
+cex = tex, col=color, pos=3)
+}
+```
+To set the variable crime as numeric and draw a plot
+```{r}
+classes <- as.numeric(train$crime)
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 1)
+```
+### Item 6
+
+```{r}
+classes1 <- as.numeric(test$crime)
+test<-data.frame(test, classes1)
+test<-dplyr::select (test, -crime)
+```
+### Item 7
+Reload the data "Boston"
+```{r}
+library(MASS)
+data("Boston")
+scale(Boston)
+```
+
+Next, count the euclidean distance matrix and the summary of distances:
+```{r}
+dist_eu <- dist(Boston)
+summary(dist_eu)
+```
+K-means clustering algorithm on the distances:
+
+```{r}
+km <-kmeans(Boston, centers = 5)
+pairs(Boston, col = km$cluster)
+```
+Exploring the optimal number of clusters. First use set.seed() to standardize the k-means protocol:
+
+
+```{r}
+library (ggplot2)
+set.seed(123)
+k_max <- 10
+twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
+
+```
+Draw a plot on the optimal number of clusters:
+```{r}
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+```
+It seems that 2 clusters would be optimal, since at that point twcss decreases suddenly.
+Running the algorithm with 2 clusters. Reducing to explore only the last 5 variables
+
+```{r}
+km <-kmeans(Boston, centers = 2)
+pairs(Boston[6:10], col=km$cluster)
+```
+There is almost a linear correlation between age and distance.
+### Bonus
+LEt's make sure The Boston data is applicable. Also standardize it by scaling again:
+
+```{r}
+library(MASS)
+data("Boston")
+scale(Boston)
+```
+
+Next let's make k clustering on the scaled Boston data with 3 centers:
+
+```{r}
+km3 <-kmeans(Boston, centers = 3)
+km3
+```
+
+An arrow plot on the linear discriminant analysis 
+```{r}
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "orange", tex = 0.75, choices = c(1,2)){
+heads <- coef(x)
+arrows(x0 = 0, y0 = 0, 
+x1 = myscale * heads[,choices[1]], 
+y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+text(myscale * heads[,choices], labels = row.names(heads), 
+cex = tex, col=color, pos=3)
+}
+
+```
+
+## Superbonus
+Let's create a matrix of model predictors on crime in "train" data set:
+```{r}
+library(plotly)
+model_predictors <- dplyr::select(train, -crime)
+# check the dimensions
+dim(model_predictors)
+dim(lda.fit$scaling)
+# matrix multiplication
+matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
+matrix_product <- as.data.frame(matrix_product)
+```
+
+
+Next, we'll adjust the code to include crime classes  in the plot
+
+```{r}
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', col="classes")
+```
+
+```{r}
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', col="clusters")
 ```
 

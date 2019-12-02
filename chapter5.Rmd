@@ -4,27 +4,30 @@ author: "Maarit"
 date: "12/2/2019"
 output: html_document
 ---
+# Dimension reduction
 To start with dimension reduction, first let's read the data:
 ```{r}
 human<-read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", header=TRUE, sep= ",")
 str(human)
 ```
-##Item 1 visualization of the data. 
+## Item 1 Visualization of the data. 
 ```{r}
 library(GGally)
+library(dplyr)
 ```
 
 
 Let us calculate a correlation matrix and then using the %>% -function draw a correlation plot:
 
 ```{r}
-cor(human) %>% corrplot()
+library(corrplot)
+cor(human) %>%corrplot()
 ```
 
 Here we can see that Life expectancy at birth and expected years of schooling have a strong positive correlation. Maternal mortality rate and adolescent birth rate also have a strong positive correlation.
 Maternal mortality has strongest negative correlation with life expectancy, and also a quite strong negative correlation with female/male proportion of secondary education, and expected years of schooling. Adolescent birth rate and life expectancy correlate negatively.
 
-# Item 2. Principal component analysis on unstandardized data "human"
+## Item 2. Principal component analysis on unstandardized data "human"
 
 ```{r}
 pca_human <- prcomp(human)
@@ -36,13 +39,10 @@ s <- summary(pca_human)
 pca_pr <- round(100*s$importance[2, ], digits = 1)
 ```
 
-```{r}
-pc_lab<-paste0(names(pca_pr), " (", pca_pr, "%)")
-biplot(pca_human, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = "pc_lab" )
-```
 
 R can't properly produce the PCA on unstandardized data. Here the arrow just shows strong negative correlation between GNI and prinicipal component 1, the other variables remaining unclear. So let's standardize the data:
-# Item 3. Working with standardized data and biplotting it:
+
+## Item 3. Working with standardized data and biplotting it:
 
 ```{r}
 human_std <- scale(human)
@@ -57,19 +57,15 @@ Expected time in education, life expectancy and female/male education ratio have
 
 The female/male ratio of labour force participation and ratio of females in parliament show high positive correlation both with each other and PC2.
 
-# Item 4 interpretation of the first two principal components
+## Item 4 interpretation of the first two principal components
 
 It seems that principal component 1 (PC1) is related with (un)survival, as it correlates  positively with such societal issues  as maternal mortality rate or adolescents births. 
 Thus it has a negative correlation with issues that are related with better survival, such as life expectancy and expected years of schooling.
 
 Principal component 2 (PC2) is related with variables that show higher levels of Maslow's need hierarchy, such as participation in work froce (described by female/male ratio) or female participation in parliament. The variables related to PC2 thus show some higher developmental stage of the society.
 
-# Item 5 
+## Item 5 
 Read data "Teatime" from the already installed FactoMineR -library:
-```{r}
-install.packages("FactoMineR")
-
-```
 
 ```{r}
 library("FactoMineR")

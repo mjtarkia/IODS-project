@@ -1,0 +1,128 @@
+---
+title: "chapter5.Rmd"
+author: "Maarit"
+date: "12/2/2019"
+output: html_document
+---
+To start with dimension reduction, first let's read the data:
+```{r}
+human<-read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", header=TRUE, sep= ",")
+str(human)
+```
+##Item 1 visualization of the data. 
+```{r}
+library(GGally)
+```
+
+
+Let us calculate a correlation matrix and then using the %>% -function draw a correlation plot:
+
+```{r}
+cor(human) %>% corrplot()
+```
+
+Here we can see that Life expectancy at birth and expected years of schooling have a strong positive correlation. Maternal mortality rate and adolescent birth rate also have a strong positive correlation.
+Maternal mortality has strongest negative correlation with life expectancy, and also a quite strong negative correlation with female/male proportion of secondary education, and expected years of schooling. Adolescent birth rate and life expectancy correlate negatively.
+
+# Item 2. Principal component analysis on unstandardized data "human"
+
+```{r}
+pca_human <- prcomp(human)
+biplot(pca_human, choices = 1:2)
+```
+
+```{r}
+s <- summary(pca_human)
+pca_pr <- round(100*s$importance[2, ], digits = 1)
+```
+
+```{r}
+pc_lab<-paste0(names(pca_pr), " (", pca_pr, "%)")
+biplot(pca_human, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = "pc_lab" )
+```
+
+R can't properly produce the PCA on unstandardized data. Here the arrow just shows strong negative correlation between GNI and prinicipal component 1, the other variables remaining unclear. So let's standardize the data:
+# Item 3. Working with standardized data and biplotting it:
+
+```{r}
+human_std <- scale(human)
+pca_human <- prcomp(human_std)
+biplot(pca_human, choices = 1:2)
+```
+The results seem a lot different after standardization. The reason is that PCA is sensitive to scaling of original features, and assumes that variables with more variance would be more significant than other. Thus, standardization of hte data is important.
+
+In biplot, angle between variables shows the degree of correlation. Angle betwwn variable and principal component axes also similarly show correlation. Small angle= high correlation.
+Here we can see that maternal mortality and adolescent birth rate have high positive correlation to each other, and also to the PC1.
+Expected time in education, life expectancy and female/male education ratio have a positive correlation to each other, negative correalation with adolescence birth and maternal mortality ratio, as well as a negative correlation with PC1.
+
+The female/male ratio of labour force participation and ratio of females in parliament show high positive correlation both with each other and PC2.
+
+# Item 4 interpretation of the first two principal components
+
+It seems that principal component 1 (PC1) is related with (un)survival, as it correlates  positively with such societal issues  as maternal mortality rate or adolescents births. 
+Thus it has a negative correlation with issues that are related with better survival, such as life expectancy and expected years of schooling.
+
+Principal component 2 (PC2) is related with variables that show higher levels of Maslow's need hierarchy, such as participation in work froce (described by female/male ratio) or female participation in parliament. The variables related to PC2 thus show some higher developmental stage of the society.
+
+# Item 5 
+Read data "Teatime" from the already installed FactoMineR -library:
+```{r}
+install.packages("FactoMineR")
+
+```
+
+```{r}
+library("FactoMineR")
+```
+
+```{r}
+data("tea")
+```
+
+```{r}
+str(tea)
+dim(tea)
+```
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+gather(tea)  %>%  ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar()
+```
+Since the data is large, and difficult to read, let's reduce the number of columns, and keep the following:
+```{r}
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+```
+LEt's create a data set "tea_time"
+```{r}
+tea_time <- select(tea,one_of(keep_columns))
+```
+```{r}
+str(tea_time)
+summary(tea_time)
+```
+Now see how this looks as a plot:
+```{r}
+gather(tea_time) %>% ggplot(aes(value), theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4))) + facet_wrap("key", scales = "free") + geom_bar() 
+```
+The bars show distribution of consumers different habits related with tea consumption: Most common is to prepare it from tea bag, drink it alone, not related with lunch. Sugar vs no sugar are almost even, whereas Earl Grey is the most popular quality, and tea is  mostly bought from chain stores.
+
+
+To perform a multiple correspondence analysis on the "tea_time" data, and see the summary of the model:
+```{r}
+mca <- MCA(tea_time, graph = FALSE)
+summary(mca)
+```
+Of the categories, based on the coordinates of categories, earl grey, alone, tea bag, and milk are located close to each other, on the negative coordinate. From v-test results we can see that dimension 1 has a strong negative correlation with teabags, and strong positive correlation with unpackaged tea. Earl grey is also negatively correlated with Dim 1, whereas Black tea correlates positively.    
+
+Draw a plot of the MCA, in which the variables are shown in different colors:
+
+```{r}
+plot(mca, invisible=c("ind"), habillage="quali")
+```
+The plot shows similar results than the written output: Similar coordinates (correlation) for Earl Grey and milk; for sugar, chain store and tea bag. In the right lower corner, tea shop is located together with green, unpackaged, and alone. These correlation seem to predict cunsumer behavior: the way they drink their tea, its packaging style, and the place where they but it from  correlate with each other.
+

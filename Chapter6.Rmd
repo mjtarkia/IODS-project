@@ -1,0 +1,30 @@
+---
+title: "Chapter6.Rmd"
+author: "Maarit Tarkiainen"
+date: "12/5/2019"
+output: html_document
+---
+
+```{r}
+ratsl<-read.table("/Users/maarit/IODS-project/ratsl", sep=" ", header=TRUE)
+```
+
+```{r}
+BPRSL<-read.table("/Users/maarit/IODS-project/BPRSL", sep=" ", header=TRUE)
+```
+
+```{r}
+str(ratsl)
+str(BPRSL)
+```
+Let's factor the categorical variables again
+```{r}
+ratsl$ID<-factor(ratsl$ID)
+ratsl$Group<-factor(ratsl$Group)
+```
+```{r}
+BPRSL$treatment <- factor(BPRSL$treatment)
+BPRSL$subject <- factor(BPRSL$subject)
+glimpse(BPRSL)
+```
+
